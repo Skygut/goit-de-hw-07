@@ -1,3 +1,4 @@
+from airflow.sensors.sql_sensor import SqlSensor
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator, BranchPythonOperator
@@ -32,29 +33,6 @@ def generate_delay():
     time.sleep(35)  # Затримка для перевірки сенсора
 
 
-def check_latest_record():
-    # Логіка перевірки, чи запис у таблиці не старший за 30 секунд
-    connection = mysql.connector.connect(
-        host="217.61.57.46",
-        user="neo_data_admin",
-        password="Proyahaxuqithab9oplp",
-        database="neo_data",
-    )
-    cursor = connection.cursor()
-    cursor.execute(
-        "SELECT created_at FROM neo_data.medals ORDER BY created_at DESC LIMIT 1;"
-    )
-    result = cursor.fetchone()
-    connection.close()
-
-    if result:
-        latest_time = result[0]
-        current_time = datetime.now()
-        delta = (current_time - latest_time).total_seconds()
-        return delta <= 30
-    return False
-
-
 # Налаштування DAG
 default_args = {
     "owner": "airflow",
@@ -66,7 +44,7 @@ default_args = {
 }
 
 dag = DAG(
-    "vchub_hw7_dag",
+    "vchub_hw7_dag7",
     default_args=default_args,
     description="Vchub DAG for medal selection and counting",
     schedule_interval=None,
@@ -139,10 +117,13 @@ generate_delay_task = PythonOperator(
     dag=dag,
 )
 
-check_for_correctness = PythonOperator(
+check_for_correctness = SqlSensor(
     task_id="check_for_correctness",
-    python_callable=check_latest_record,
-    dag=dag,
+    conn_id=connection_name,
+    sql="SELECT COUNT(*) FROM neo_data.vchub_medals_counts WHERE created_at >= NOW() - INTERVAL 30 SECOND;",
+    mode="poke",
+    poke_interval=5,
+    timeout=600,
 )
 
 # Зв'язки між завданнями
