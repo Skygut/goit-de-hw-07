@@ -18,23 +18,18 @@ with DAG(
     tags=["vchub"],
 ) as dag:
 
-    # Завдання 0: Створення бази даних
+    # Завдання 1: Створення бази даних
     create_database = MySqlOperator(
         task_id="create_database",
         mysql_conn_id=connection_name,
         sql="CREATE DATABASE IF NOT EXISTS vchub;",
     )
 
-    # Завдання 1: Використання бази даних
-    use_database = MySqlOperator(
-        task_id="use_database", mysql_conn_id=connection_name, sql="USE vchub;"
-    )
-
     # Завдання 2: Видалення таблиці, якщо існує
     drop_table = MySqlOperator(
         task_id="drop_table",
         mysql_conn_id=connection_name,
-        sql="DROP TABLE IF EXISTS vchub_medals;",
+        sql="DROP TABLE IF EXISTS vchub.vchub_medals;",
     )
 
     # Завдання 3: Створення таблиці
@@ -42,7 +37,7 @@ with DAG(
         task_id="create_table",
         mysql_conn_id=connection_name,
         sql="""
-        CREATE TABLE IF NOT EXISTS vchub_medals (
+        CREATE TABLE IF NOT EXISTS vchub.vchub_medals (
             id INT AUTO_INCREMENT PRIMARY KEY,
             medal_type VARCHAR(10),
             count INT,
@@ -56,17 +51,17 @@ with DAG(
         task_id="populate_table",
         mysql_conn_id=connection_name,
         sql="""
-        INSERT INTO vchub_medals (medal_type, count, created_at) VALUES
-        ('Gold', 820, CURRENT_TIMESTAMP),
-        ('Silver', 2120, CURRENT_TIMESTAMP),
-        ('Bronze', 15, CURRENT_TIMESTAMP),
-        ('Gold', 255, CURRENT_TIMESTAMP),
-        ('Silver', 25, CURRENT_TIMESTAMP),
-        ('Bronze', 3340, CURRENT_TIMESTAMP),
-        ('Gold', 83, CURRENT_TIMESTAMP),
-        ('Silver', 148, CURRENT_TIMESTAMP),
-        ('Bronze', 162, CURRENT_TIMESTAMP),
-        ('Gold', 174, CURRENT_TIMESTAMP);
+        INSERT INTO vchub.vchub_medals (medal_type, count, created_at) VALUES
+        ('Gold', 1010, CURRENT_TIMESTAMP),
+        ('Silver', 2010, CURRENT_TIMESTAMP),
+        ('Bronze', 145, CURRENT_TIMESTAMP),
+        ('Gold', 552, CURRENT_TIMESTAMP),
+        ('Silver', 235, CURRENT_TIMESTAMP),
+        ('Bronze', 380, CURRENT_TIMESTAMP),
+        ('Gold', 885, CURRENT_TIMESTAMP),
+        ('Silver', 188, CURRENT_TIMESTAMP),
+        ('Bronze', 1632, CURRENT_TIMESTAMP),
+        ('Gold', 1644, CURRENT_TIMESTAMP);
         """,
     )
 
@@ -74,11 +69,4 @@ with DAG(
     force_success = DummyOperator(task_id="force_success", trigger_rule="all_failed")
 
     # Зв'язок між завданнями
-    (
-        create_database
-        >> use_database
-        >> drop_table
-        >> create_table
-        >> populate_table
-        >> force_success
-    )
+    create_database >> drop_table >> create_table >> populate_table >> force_success
