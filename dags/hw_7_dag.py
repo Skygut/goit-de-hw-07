@@ -30,7 +30,14 @@ with DAG(
         task_id="use_database", mysql_conn_id=connection_name, sql="USE vchub;"
     )
 
-    # Завдання 2: Створення таблиці
+    # Завдання 2: Видалення таблиці, якщо існує
+    drop_table = MySqlOperator(
+        task_id="drop_table",
+        mysql_conn_id=connection_name,
+        sql="DROP TABLE IF EXISTS vchub_medals;",
+    )
+
+    # Завдання 3: Створення таблиці
     create_table = MySqlOperator(
         task_id="create_table",
         mysql_conn_id=connection_name,
@@ -44,27 +51,34 @@ with DAG(
         """,
     )
 
-    # Завдання 3: Наповнення таблиці
+    # Завдання 4: Наповнення таблиці
     populate_table = MySqlOperator(
         task_id="populate_table",
         mysql_conn_id=connection_name,
         sql="""
         INSERT INTO vchub_medals (medal_type, count, created_at) VALUES
-        ('Gold', 10, CURRENT_TIMESTAMP),
-        ('Silver', 20, CURRENT_TIMESTAMP),
+        ('Gold', 820, CURRENT_TIMESTAMP),
+        ('Silver', 2120, CURRENT_TIMESTAMP),
         ('Bronze', 15, CURRENT_TIMESTAMP),
-        ('Gold', 5, CURRENT_TIMESTAMP),
+        ('Gold', 255, CURRENT_TIMESTAMP),
         ('Silver', 25, CURRENT_TIMESTAMP),
-        ('Bronze', 30, CURRENT_TIMESTAMP),
-        ('Gold', 8, CURRENT_TIMESTAMP),
-        ('Silver', 18, CURRENT_TIMESTAMP),
-        ('Bronze', 12, CURRENT_TIMESTAMP),
-        ('Gold', 14, CURRENT_TIMESTAMP);
+        ('Bronze', 3340, CURRENT_TIMESTAMP),
+        ('Gold', 83, CURRENT_TIMESTAMP),
+        ('Silver', 148, CURRENT_TIMESTAMP),
+        ('Bronze', 162, CURRENT_TIMESTAMP),
+        ('Gold', 174, CURRENT_TIMESTAMP);
         """,
     )
 
-    # Завдання 4: Примусове завершення DAG як успішного
+    # Завдання 5: Примусове завершення DAG як успішного
     force_success = DummyOperator(task_id="force_success", trigger_rule="all_failed")
 
     # Зв'язок між завданнями
-    create_database >> use_database >> create_table >> populate_table >> force_success
+    (
+        create_database
+        >> use_database
+        >> drop_table
+        >> create_table
+        >> populate_table
+        >> force_success
+    )
