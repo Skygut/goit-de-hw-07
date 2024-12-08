@@ -4,7 +4,7 @@ from airflow.operators.dummy import DummyOperator
 from datetime import datetime
 
 # Назва з'єднання з MySQL
-connection_name = "goit_mysql_db_vchub"
+connection_name = "goit_mysql_db_chub"
 
 default_args = {
     "start_date": datetime(2024, 12, 7),
